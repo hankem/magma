@@ -10,12 +10,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-
+import logging
 import os
 
 import sentry_sdk
 import snowflake
 from magma.configuration.service_configs import get_service_config_value
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 CONTROL_PROXY = 'control_proxy'
 SENTRY_URL = 'sentry_url_python'
@@ -23,7 +24,7 @@ SENTRY_SAMPLE_RATE = 'sentry_sample_rate'
 COMMIT_HASH = 'COMMIT_HASH'
 HWID = 'hwid'
 SERVICE_NAME = 'service_name'
-
+NOT_LOGGED = 999999
 
 def sentry_init(service_name: str):
     """Initialize connection and start piping errors to sentry.io."""
@@ -41,6 +42,7 @@ def sentry_init(service_name: str):
         default=1.0,
     )
     sentry_sdk.init(
+        integrations=[LoggingIntegration(level=logging.INFO, event_level=NOT_LOGGED)],
         dsn=sentry_url,
         release=os.getenv(COMMIT_HASH),
         traces_sample_rate=sentry_sample_rate,

@@ -22,11 +22,11 @@ from __future__ import (
     unicode_literals,
 )
 
-import logging
 from copy import deepcopy
 from ipaddress import ip_address, ip_network
 from typing import List
 
+from magma.common.logger import Logger
 from magma.mobilityd.ip_descriptor import IPDesc, IPState, IPType
 
 from .ip_allocator_base import (
@@ -38,6 +38,7 @@ from .ip_allocator_base import (
 from .mobility_store import MobilityStore
 
 DEFAULT_IP_RECYCLE_INTERVAL = 15
+LOG = Logger()
 
 
 class IpAllocatorPool(IPAllocator):
@@ -110,16 +111,16 @@ class IpAllocatorPool(IPAllocator):
         """
 
         remove_blocks = set(ipblocks) & self._store.assigned_ip_blocks
-        logging.debug(
+        LOG.debug(
             "Current assigned IP blocks: %s",
             self._store.assigned_ip_blocks,
         )
-        logging.debug("IP blocks to remove: %s", ipblocks)
+        LOG.debug("IP blocks to remove: %s", ipblocks)
 
         extraneous_blocks = set(ipblocks) ^ remove_blocks
         # check unknown ip blocks
         if extraneous_blocks:
-            logging.warning(
+            LOG.warning(
                 "Cannot remove unknown IP block(s): %s",
                 extraneous_blocks,
             )
@@ -166,7 +167,7 @@ class IpAllocatorPool(IPAllocator):
             self._store.sid_ips_map.pop(sid)
 
         for block in remove_blocks:
-            logging.info('Removed IP block %s from IPv4 address pool', block)
+            LOG.info('Removed IP block %s from IPv4 address pool', block)
         return list(remove_blocks)
 
     def list_added_ip_blocks(self) -> List[ip_network]:
@@ -192,7 +193,7 @@ class IpAllocatorPool(IPAllocator):
           internal list
         """
         if ipblock not in self._store.assigned_ip_blocks:
-            logging.error("Listing an unknown IP block: %s", ipblock)
+            LOG.error("Listing an unknown IP block: %s", ipblock)
             raise IPBlockNotFoundError(ipblock)
 
         res = [
@@ -225,7 +226,7 @@ class IpAllocatorPool(IPAllocator):
             ip_desc.state = IPState.ALLOCATED
             return ip_desc
         else:
-            logging.error("Run out of available IP addresses")
+            LOG.error("Run out of available IP addresses")
             raise NoAvailableIPError("No available IP addresses")
 
     def release_ip(self, ip_desc: IPDesc):

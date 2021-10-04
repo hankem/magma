@@ -21,6 +21,7 @@ import time
 import unittest
 
 from freezegun import freeze_time
+from magma.common.logger import Logger
 from magma.mobilityd.dhcp_client import DHCPClient
 from magma.mobilityd.dhcp_desc import DHCPDescriptor, DHCPState
 from magma.mobilityd.mac import MacAddress
@@ -30,8 +31,7 @@ from scapy.layers.dhcp import DHCP
 from scapy.layers.l2 import Dot1Q, Ether
 from scapy.sendrecv import AsyncSniffer
 
-LOG = logging.getLogger('mobilityd.dhcp.test')
-LOG.isEnabledFor(logging.DEBUG)
+LOG = Logger('mobilityd.dhcp.test')
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 SCRIPT_PATH = "/home/vagrant/magma/lte/gateway/python/magma/mobilityd/"

@@ -17,8 +17,10 @@ from typing import List, MutableMapping, Optional
 
 import netifaces
 from lte.protos.mobilityd_pb2 import GWInfo, IPAddress
+from magma.common.logger import Logger
 
 NO_VLAN = "NO_VLAN"
+LOG = Logger()
 
 
 def _get_vlan_key(vlan) -> str:
@@ -28,7 +30,7 @@ def _get_vlan_key(vlan) -> str:
         if vlan:
             vlan_id_parsed = int(vlan)
     except ValueError:
-        logging.debug("invalid vlan id: %s", vlan)
+        LOG.debug("invalid vlan id: %s", vlan)
 
     if vlan_id_parsed == 0:
         return NO_VLAN
@@ -69,7 +71,7 @@ class UplinkGatewayInfo:
 
     def _do_read_default_gw(self):
         gws = netifaces.gateways()
-        logging.info("Using GW info: %s", gws)
+        LOG.info("Using GW info: %s", gws)
         if gws is not None:
             default_gw = gws.get('default', None)
             gw_ip_addr = None
@@ -77,7 +79,7 @@ class UplinkGatewayInfo:
                 gw_ip_addr = default_gw.get(netifaces.AF_INET, None)
             if gw_ip_addr is not None:
                 self.update_ip(gw_ip_addr[0])
-                logging.info("GW probe: timer stopped")
+                LOG.info("GW probe: timer stopped")
                 self._read_default_gw_timer = None
                 return
 
@@ -86,7 +88,7 @@ class UplinkGatewayInfo:
             self._do_read_default_gw,
         )
         self._read_default_gw_timer.start()
-        logging.info("GW probe: timer started")
+        LOG.info("GW probe: timer started")
 
     def update_ip(self, ip: Optional[str], vlan_id=None):
         """
@@ -98,7 +100,7 @@ class UplinkGatewayInfo:
         try:
             ip_addr = ipaddress.ip_address(ip)
         except ValueError:
-            logging.debug("could not parse GW IP: %s", ip)
+            LOG.debug("could not parse GW IP: %s", ip)
             return
 
         gw_ip = IPAddress(
@@ -110,12 +112,12 @@ class UplinkGatewayInfo:
         if vlan_key in self._backing_map:
             gw_info = self._backing_map[vlan_key]
             if gw_info and gw_info.ip == gw_ip:
-                logging.debug("GW update: no change %s", ip)
+                LOG.debug("GW update: no change %s", ip)
                 return
 
         updated_info = GWInfo(ip=gw_ip, mac="", vlan=vlan_key)
         self._backing_map[vlan_key] = updated_info
-        logging.info("GW update: GW IP[%s]: %s" % (vlan_key, ip))
+        LOG.info("GW update: GW IP[%s]: %s" % (vlan_key, ip))
 
     def get_gw_mac(self, vlan_id: Optional[str] = None) -> Optional[str]:
         """
@@ -140,13 +142,13 @@ class UplinkGatewayInfo:
         try:
             ip_addr = ipaddress.ip_address(ip)
         except ValueError:
-            logging.debug("could not parse GW IP: %s", ip)
+            LOG.debug("could not parse GW IP: %s", ip)
             return
         vlan_key = _get_vlan_key(vlan_id)
 
         # TODO: enhance check for MAC address sanity.
         if mac is None or ':' not in mac:
-            logging.error(
+            LOG.error(
                 "Incorrect mac format: %s for IP %s (vlan_key %s)",
                 mac, ip, vlan_id,
             )
@@ -157,7 +159,7 @@ class UplinkGatewayInfo:
         )
         updated_info = GWInfo(ip=gw_ip, mac=mac, vlan=vlan_key)
         self._backing_map[vlan_key] = updated_info
-        logging.info("GW update: GW IP[%s]: %s : mac %s" % (vlan_key, ip, mac))
+        LOG.info("GW update: GW IP[%s]: %s : mac %s" % (vlan_key, ip, mac))
 
     def get_all_router_ips(self) -> List[GWInfo]:
         return list(self._backing_map.values())

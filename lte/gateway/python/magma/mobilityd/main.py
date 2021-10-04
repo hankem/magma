@@ -11,11 +11,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import ipaddress
-import logging
 from typing import Any, Optional
 
 from lte.protos.mconfig import mconfigs_pb2
 from lte.protos.subscriberdb_pb2_grpc import SubscriberDBStub
+from magma.common.logger import Logger
 from magma.common.redis.client import get_default_client
 from magma.common.sentry import sentry_init
 from magma.common.service import MagmaService
@@ -33,6 +33,7 @@ from magma.mobilityd.rpc_servicer import MobilityServiceRpcServicer
 DEFAULT_IPV6_PREFIX_ALLOC_MODE = 'RANDOM'
 RETRY_LIMIT = 300
 DEFAULT_REDIS_PORT = 6380
+LOG = Logger()
 
 
 def _get_ipv4_allocator(
@@ -70,7 +71,7 @@ def _get_ipv4_allocator(
             ip_allocator=ip_allocator,
         )
 
-    logging.info(
+    LOG.info(
         "Using allocator: %s static ip: %s multi_apn %s",
         allocator_type,
         static_ip_enabled,
@@ -95,14 +96,14 @@ def _get_ip_block(
         Optional[ipaddress.ip_network]:
     """
     if not ip_block_str:
-        logging.warning(
+        LOG.warning(
             "%s ip block is not specified in mconfig, skipping", ip_type,
         )
         return None
     try:
         ip_block = ipaddress.ip_network(ip_block_str)
     except ValueError:
-        logging.error("Invalid IP block format: %s", ip_block_str)
+        LOG.error("Invalid IP block format: %s", ip_block_str)
         return None
     return ip_block
 
@@ -164,7 +165,7 @@ def main():
     # No dynamic reloading support for now, assume restart after updates
     ipv4_block = _get_ip_block(mconfig.ip_block, "IPv4")
     if ipv4_block is not None:
-        logging.info('Adding IPv4 block')
+        LOG.info('Adding IPv4 block')
         try:
             allocated_ip_blocks = ip_address_man.list_added_ip_blocks()
             if ipv4_block not in allocated_ip_blocks:
@@ -172,17 +173,17 @@ def main():
                 ip_address_man.remove_ip_blocks(*allocated_ip_blocks, force=True)
                 ip_address_man.add_ip_block(ipv4_block)
         except OverlappedIPBlocksError:
-            logging.warning("Overlapped IPv4 block: %s", ipv4_block)
+            LOG.warning("Overlapped IPv4 block: %s", ipv4_block)
 
     ipv6_block = _get_ip_block(mconfig.ipv6_block, "IPv6")
     if ipv6_block is not None:
-        logging.info('Adding IPv6 block')
+        LOG.info('Adding IPv6 block')
         try:
             allocated_ipv6_block = ip_address_man.get_assigned_ipv6_block()
             if ipv6_block != allocated_ipv6_block:
                 ip_address_man.add_ip_block(ipv6_block)
         except OverlappedIPBlocksError:
-            logging.warning("Overlapped IPv6 block: %s", ipv6_block)
+            LOG.warning("Overlapped IPv6 block: %s", ipv6_block)
 
     # Add all servicers to the server
     mobility_service_servicer = MobilityServiceRpcServicer(
