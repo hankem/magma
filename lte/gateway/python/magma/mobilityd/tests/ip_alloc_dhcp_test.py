@@ -19,6 +19,7 @@ import threading
 import unittest.mock
 from ipaddress import ip_network
 
+from magma.common.logger import Logger
 from magma.common.redis.client import get_default_client
 from magma.mobilityd.ip_address_man import (
     IPAddressManager,
@@ -31,8 +32,7 @@ from magma.mobilityd.mac import create_mac_from_sid
 from magma.mobilityd.mobility_store import MobilityStore
 from magma.pipelined.bridge_util import BridgeTools
 
-LOG = logging.getLogger('mobilityd.dhcp.test')
-LOG.isEnabledFor(logging.DEBUG)
+LOG = Logger('mobilityd.dhcp.test')
 
 """
 This test needs to run on vagrant box due to dependency on

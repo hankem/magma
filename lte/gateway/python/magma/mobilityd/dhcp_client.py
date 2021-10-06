@@ -13,13 +13,13 @@ limitations under the License.
 Allocates IP address as per DHCP server in the uplink network.
 """
 import datetime
-import logging
 import threading
 import time
 from ipaddress import IPv4Network, ip_address
 from threading import Condition
 from typing import MutableMapping, Optional
 
+from magma.common.logger import Logger
 from magma.mobilityd.dhcp_desc import DHCPDescriptor, DHCPState
 from magma.mobilityd.mac import MacAddress, hex_to_mac
 from magma.mobilityd.uplink_gw import UplinkGatewayInfo
@@ -29,7 +29,7 @@ from scapy.layers.inet import IP, UDP
 from scapy.layers.l2 import Dot1Q, Ether
 from scapy.sendrecv import sendp
 
-LOG = logging.getLogger('mobilityd.dhcp.sniff')
+LOG = Logger('mobilityd.dhcp.sniff')
 DHCP_ACTIVE_STATES = [DHCPState.ACK, DHCPState.OFFER]
 
 
@@ -206,20 +206,20 @@ class DHCPClient:
             wait_time = self._lease_renew_wait_min
             with self._dhcp_notify:
                 for dhcp_record in self.dhcp_client_state.values():
-                    logging.debug("monitor: %s", dhcp_record)
+                    LOG.debug("monitor: %s", dhcp_record)
                     # Only process active records.
                     if dhcp_record.state not in DHCP_ACTIVE_STATES:
                         continue
 
                     now = datetime.datetime.now()
-                    logging.debug("monitor time: %s", now)
+                    LOG.debug("monitor time: %s", now)
                     request_state = DHCPState.REQUEST
                     # in case of lost DHCP lease rediscover it.
                     if now >= dhcp_record.lease_expiration_time:
                         request_state = DHCPState.DISCOVER
 
                     if now >= dhcp_record.lease_renew_deadline:
-                        logging.debug("sending lease renewal")
+                        LOG.debug("sending lease renewal")
                         self.send_dhcp_packet(
                             dhcp_record.mac, dhcp_record.vlan,
                             request_state, dhcp_record,
@@ -233,7 +233,7 @@ class DHCPClient:
 
             # default in wait is 30 sec
             wait_time = max(wait_time, self._lease_renew_wait_min)
-            logging.debug("lease renewal check after: %s sec" % wait_time)
+            LOG.debug("lease renewal check after: %s sec" % wait_time)
             self._monitor_thread_event.wait(wait_time)
             if self._monitor_thread_event.is_set():
                 break

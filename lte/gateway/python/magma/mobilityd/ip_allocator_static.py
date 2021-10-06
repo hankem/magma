@@ -22,11 +22,11 @@ from __future__ import (
     unicode_literals,
 )
 
-import logging
 from ipaddress import ip_address, ip_network
 from typing import List, Optional
 
 from lte.protos.subscriberdb_pb2_grpc import SubscriberDBStub
+from magma.common.logger import Logger
 from magma.mobilityd.ip_allocator_base import (
     DuplicateIPAssignmentError,
     IPAllocator,
@@ -36,6 +36,7 @@ from magma.mobilityd.mobility_store import MobilityStore
 from magma.mobilityd.subscriberdb_client import SubscriberDbClient
 
 DEFAULT_IP_RECYCLE_INTERVAL = 15
+LOG = Logger()
 
 
 class IPAllocatorStaticWrapper(IPAllocator):
@@ -112,7 +113,7 @@ class IPAllocatorStaticWrapper(IPAllocator):
         ip_addr_info = self._subscriber_client.get_subscriber_ip(sid)
         if ip_addr_info is None:
             return None
-        logging.debug(
+        LOG.debug(
             "Found static IP: sid: %s ip_addr_info: %s",
             sid, str(ip_addr_info),
         )
@@ -122,7 +123,7 @@ class IPAllocatorStaticWrapper(IPAllocator):
                 error_msg = "Static Ip {} Overlap with IP-POOL: {}".format(
                     ip_addr_info.ip, ip_pool,
                 )
-                logging.error(error_msg)
+                LOG.error(error_msg)
                 raise DuplicateIPAssignmentError(error_msg)
 
         # update gw info if available.

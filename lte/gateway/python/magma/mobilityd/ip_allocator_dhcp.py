@@ -26,6 +26,7 @@ from ipaddress import ip_address, ip_network
 from threading import Condition
 from typing import List
 
+from magma.common.logger import Logger
 from magma.mobilityd.ip_descriptor import IPDesc, IPState, IPType
 
 from .dhcp_client import DHCPClient
@@ -37,7 +38,7 @@ from .mobility_store import MobilityStore
 DEFAULT_DHCP_REQUEST_RETRY_FREQUENCY = 10
 DEFAULT_DHCP_REQUEST_RETRY_DELAY = 1
 
-LOG = logging.getLogger('mobilityd.dhcp.alloc')
+LOG = Logger('mobilityd.dhcp.alloc')
 
 
 class IPAllocatorDHCP(IPAllocator):
@@ -70,7 +71,7 @@ class IPAllocatorDHCP(IPAllocator):
         self._dhcp_client.run()
 
     def add_ip_block(self, ipblock: ip_network):
-        logging.warning(
+        LOG.warning(
             "No need to allocate block for DHCP allocator: %s",
             ipblock,
         )
@@ -79,7 +80,7 @@ class IPAllocatorDHCP(IPAllocator):
         self, *ipblocks: List[ip_network],
         force: bool = False
     ) -> List[ip_network]:
-        logging.warning(
+        LOG.warning(
             "Trying to delete ipblock from DHCP allocator: %s",
             ipblocks,
         )
@@ -181,7 +182,7 @@ class IPAllocatorDHCP(IPAllocator):
         ip_block_network = ip_network(ip_desc.ip_block)
         if ip_block_network in self._store.assigned_ip_blocks:
             self._store.assigned_ip_blocks.remove(ip_block_network)
-        logging.debug(
+        LOG.debug(
             "del: _assigned_ip_blocks %s ipblock %s",
             self._store.assigned_ip_blocks, ip_desc.ip_block,
         )

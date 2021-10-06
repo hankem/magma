@@ -10,10 +10,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import logging
 import random
 from ipaddress import ip_address, ip_network
 from typing import List, Optional
+
+from magma.common.logger import Logger
 
 from .ip_allocator_base import (
     IPAllocator,
@@ -28,6 +29,7 @@ IPV6_PREFIX_PART_LEN = 64
 IID_PART_LEN = 64
 MAX_IPV6_CONF_PREFIX_LEN = 48
 MAX_CALC_TRIES = 5
+LOG = Logger()
 
 
 class IPv6AllocatorPool(IPAllocator):
@@ -53,7 +55,7 @@ class IPv6AllocatorPool(IPAllocator):
 
         if ipblock.prefixlen > MAX_IPV6_CONF_PREFIX_LEN:
             msg = "IPv6 block exceeds maximum allowed prefix length"
-            logging.error(msg)
+            LOG.error(msg)
             raise InvalidIPv6NetworkError(msg)
 
         # For now only one IPv6 network is supported
@@ -104,7 +106,7 @@ class IPv6AllocatorPool(IPAllocator):
                 self._store.sid_ips_map.pop(sid)
 
         removed_blocks.append(self._assigned_ip_block)
-        logging.info(
+        LOG.info(
             'Removed IP block %s from IPv6 address pool',
             self._assigned_ip_block,
         )
@@ -131,7 +133,7 @@ class IPv6AllocatorPool(IPAllocator):
         # Calculate session part from rest of 64 prefix bits
         session_prefix_part = self._get_session_prefix(sid)
         if not session_prefix_part:
-            logging.error('Could not get IPv6 session prefix for sid: %s', sid)
+            LOG.error('Could not get IPv6 session prefix for sid: %s', sid)
             raise MaxCalculationError(
                 'Could not get IPv6 session prefix for sid: %s', sid,
             )
@@ -139,7 +141,7 @@ class IPv6AllocatorPool(IPAllocator):
         # Get interface identifier from 64 bits fixed length
         iid_part = self._get_ipv6_iid_part(sid, IID_PART_LEN)
         if not iid_part:
-            logging.error('Could not get IPv6 IID for sid: %s', sid)
+            LOG.error('Could not get IPv6 IID for sid: %s', sid)
             raise MaxCalculationError(
                 'Could not get IPv6 IID for sid: %s', sid,
             )

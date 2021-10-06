@@ -12,7 +12,6 @@ limitations under the License.
 """
 
 import ipaddress
-import logging
 import unittest
 from typing import Optional
 
@@ -23,6 +22,7 @@ from lte.protos.subscriberdb_pb2 import (
     SubscriberData,
     SubscriberState,
 )
+from magma.common.logger import Logger
 from magma.common.redis.client import get_default_client
 from magma.mobilityd.ip_address_man import IPAddressManager
 from magma.mobilityd.ip_allocator_multi_apn import IPAllocatorMultiAPNWrapper
@@ -32,6 +32,8 @@ from magma.mobilityd.ip_descriptor import IPType
 from magma.mobilityd.ipv6_allocator_pool import IPv6AllocatorPool
 from magma.mobilityd.mobility_store import MobilityStore
 from magma.subscriberdb.sid import SIDUtils
+
+LOG = Logger()
 
 
 class MockedSubscriberDBStub:
@@ -145,7 +147,7 @@ class MultiAPNIPAllocationTests(unittest.TestCase):
 
     def check_vlan(self, sid: str, vlan: str):
         ip_desc = self._allocator._store.sid_ips_map[sid]
-        logging.info(
+        LOG.info(
             "type ip_desc.vlan_id %s vlan %s", type(ip_desc.vlan_id),
             type(vlan),
         )

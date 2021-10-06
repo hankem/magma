@@ -11,16 +11,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import ipaddress
-import logging
 import subprocess
 import unittest
 from collections import defaultdict
 
 from lte.protos.mobilityd_pb2 import GWInfo, IPAddress
+from magma.common.logger import Logger
 from magma.mobilityd.uplink_gw import NO_VLAN, UplinkGatewayInfo
 
-LOG = logging.getLogger('mobilityd.def_gw.test')
-LOG.isEnabledFor(logging.DEBUG)
+LOG = Logger('mobilityd.def_gw.test')
 
 
 def _get_gw_info(ip, mac="", vlan=NO_VLAN):
